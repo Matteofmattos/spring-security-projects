@@ -2,6 +2,7 @@ package com.Matteof_mtts.spring_project_Oauth2.security;
 
 import com.Matteof_mtts.spring_project_Oauth2.config.CustomPasswordAuthenticationConverter;
 import com.Matteof_mtts.spring_project_Oauth2.config.CustomPasswordAuthenticationProvider;
+import com.Matteof_mtts.spring_project_Oauth2.config.CustomUserAuthorities;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.JWKSource;
@@ -11,6 +12,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -70,29 +72,35 @@ public class AuthorizationConfig {
     }
 
 
-    // --------------- Processo de geração de token
+    // --------------- Processo de geração de token customizado em nome de outro usuário;
     @Bean
     public OAuth2TokenGenerator<? extends OAuth2Token> tokenGenerator() {
+
         NimbusJwtEncoder jwtEncoder = new NimbusJwtEncoder(jwkSource());
         JwtGenerator jwtGenerator = new JwtGenerator(jwtEncoder);
         jwtGenerator.setJwtCustomizer(tokenCustomizer());
         OAuth2AccessTokenGenerator accessTokenGenerator = new OAuth2AccessTokenGenerator();
+
         return new DelegatingOAuth2TokenGenerator(jwtGenerator, accessTokenGenerator);
     }
 
+
     @Bean
     public OAuth2TokenCustomizer<JwtEncodingContext> tokenCustomizer() {
+
         return context -> {
-            OAuth2ClientAuthenticationToken principal = context.getPrincipal();
-            CustomUserAuthorities user = (CustomUserAuthorities) principal.getDetails();
-            List<String> authorities = user.getAuthorities().stream().map(x -> x.getAuthority()).toList();
-            if (context.getTokenType().getValue().equals("access_token")) {
-                // @formatter:off
-                context.getClaims()
-                        .claim("authorities", authorities)
-                        .claim("username", user.getUsername());
-                // @formatter:on
-            }
+
+//            OAuth2ClientAuthenticationToken principal = context.getPrincipal();
+//            CustomUserAuthorities user = (CustomUserAuthorities) principal.getDetails();
+//            List<String> authorities = user.getAuthorities().stream().map(GrantedAuthority::getAuthority).toList();
+//
+//            if (context.getTokenType().getValue().equals("access_token")) {
+//                // @formatter:off
+//                context.getClaims()
+//                        .claim("authorities", authorities)
+//                        .claim("username", user.getUsername());
+//                // @formatter:on
+//            }
         };
     }
 
